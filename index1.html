@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2048スネーク - 盤面拡張版</title>
+    <title>2048スネーク - 最高操作性版</title>
     <style>
         body {
             display: flex;
@@ -49,13 +49,14 @@
             z-index: 10;
         }
         .hidden { display: none !important; }
-        .title { font-size: 40px; font-weight: bold; color: #776e65; margin-bottom: 20px; }
+        .title { font-size: 40px; font-weight: bold; color: #776e65; margin-bottom: 20px; text-align: center; white-space: pre-line; }
         .btn {
             padding: 10px 30px; font-size: 20px; font-weight: bold;
             color: white; background-color: #8f7a66; border: none; border-radius: 5px;
             cursor: pointer; transition: 0.2s;
         }
         .btn:hover { background-color: #9f8b77; }
+        #hint { font-size: 14px; color: #a6998a; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -70,6 +71,7 @@
     <div id="overlay">
         <div class="title" id="overlayTitle">2048スネーク</div>
         <button class="btn" id="startBtn">ゲームスタート</button>
+        <div id="hint">※スペースキーでもスタートできます</div>
     </div>
 
     <script>
@@ -81,7 +83,7 @@
         const overlayTitle = document.getElementById('overlayTitle');
         const startBtn = document.getElementById('startBtn');
 
-        // --- Web Audio API (おしゃれBGM＆効果音) ---
+        // --- Web Audio API ---
         let audioCtx;
         let bgmInterval;
         
@@ -162,12 +164,13 @@
         }
 
         // --- ゲームの基本設定 ---
-        let gridSize = 15; // 初期値は15（1024以上で20に可変）
+        let gridSize = 15;
         let tileSize = canvas.width / gridSize;
         let baseMoveInterval = 220;
         let moveInterval = baseMoveInterval;
         
         let player, dx, dy, nextDx, nextDy, lastTime, isGameOver, items, popScale;
+        let isFirstScreen = true; // 初回起動画面かどうかのフラグ
 
         const colors = {
             2: { bg: '#eee4da', text: '#776e65' }, 4: { bg: '#ede0c8', text: '#776e65' },
@@ -179,11 +182,12 @@
         };
 
         function initGame() {
-            gridSize = 15; // リセット
+            gridSize = 15;
             tileSize = canvas.width / gridSize;
             player = { x: 7, y: 7, visualX: 7, visualY: 7, value: 2, size: 1 };
             dx = 1; dy = 0; nextDx = 1; nextDy = 0;
             isGameOver = false;
+            isFirstScreen = false;
             popScale = 1.0;
             updateDifficulty();
             spawnItems();
@@ -205,7 +209,6 @@
             const level = Math.log2(player.value); 
             moveInterval = Math.max(80, baseMoveInterval - (level - 1) * 10);
             
-            // 【変更点】1024以上になった瞬間に盤面を20x20マスに拡張
             if (player.value >= 1024) {
                 if (gridSize !== 20) {
                     gridSize = 20;
@@ -275,12 +278,12 @@
         function update() {
             if (isGameOver) return;
 
+            // 【変更点2】 キー入力された方向（nextDx, nextDy）を即時反映してレスポンス向上
             dx = nextDx; dy = nextDy;
             player.x += dx; player.y += dy;
 
             const pCells = getPlayerCells(player.x, player.y, player.size);
 
-            // 壁判定（拡張された新グリッドサイズに追従）
             const hitWall = pCells.some(cell => cell.x < 0 || cell.x >= gridSize || cell.y < 0 || cell.y >= gridSize);
             if (hitWall) {
                 gameOver(); return;
@@ -298,8 +301,8 @@
                     player.value *= 2;
                     popScale = 1.4; 
                     playSound('eat');
-                    updateDifficulty(); // ここで1024に達すると盤面サイズ(gridSize)が変わる
-                    spawnItems();       // 変わったサイズに準拠してアイテムが生成される
+                    updateDifficulty(); 
+                    spawnItems();       
                 } else {
                     gameOver();
                 }
@@ -309,10 +312,10 @@
         function gameOver() {
             isGameOver = true;
             stopBGM();
-            playSound('crash');
+            playSound('crash'); 
             overlay.classList.remove('hidden');
             overlayTitle.innerText = `Game Over\n(記録: ${player.value})`;
-            startBtn.innerText = "リトライ";
+            startBtn.innerText = "スペースキーでリトライ";
         }
 
         function drawPlayerBlock(x, y, value, size, scale = 1.0) {
@@ -330,7 +333,6 @@
             ctx.fillRect(x * tileSize + 2, y * tileSize + 2, totalWidth - 4, totalWidth - 4);
             
             ctx.fillStyle = colorObj.text;
-            // 盤面縮小に合わせてフォントサイズを微調整
             const fSize = gridSize === 20 ? (value > 100 ? '16px' : '22px') : (value > 100 ? '20px' : '28px');
             ctx.font = 'bold ' + fSize + ' Arial';
             ctx.textAlign = 'center';
@@ -366,8 +368,9 @@
 
             items.forEach(item => drawNormalBlock(item.x, item.y, item.value));
 
-            player.visualX += (player.x - player.visualX) * 0.3;
-            player.visualY += (player.y - player.visualY) * 0.3;
+            // 【変更点1】 追従係数を 0.3 から 0.35 に微増させ、かつ入力方向へのキレを良くしてより滑らかに
+            player.visualX += (player.x - player.visualX) * 0.35;
+            player.visualY += (player.y - player.visualY) * 0.35;
 
             if (popScale > 1.0) popScale = Math.max(1.0, popScale - 0.08);
             
@@ -388,11 +391,21 @@
             if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].indexOf(e.code) > -1) {
                 e.preventDefault();
             }
+
+            // 【変更点3】 メニュー表示中、またはゲームオーバー時にスペースキーでリスタート
+            if (e.key === ' ' || e.code === 'Space') {
+                if (isFirstScreen || isGameOver) {
+                    initGame();
+                    return;
+                }
+            }
+
             switch (e.key) {
-                case 'ArrowUp':    if (dy !== 1) { nextDx = 0; nextDy = -1; } break;
-                case 'ArrowDown':  if (dy !== -1) { nextDx = 0; nextDy = 1; } break;
-                case 'ArrowLeft':  if (dx !== 1) { nextDx = -1; nextDy = 0; } break;
-                case 'ArrowRight': if (dx !== -1) { nextDx = 1; nextDy = 0; } break;
+                // キーを押した瞬間に即座に進行方向のバッファ（nextDx, nextDy）を反映
+                case 'ArrowUp':    if (dy !== 1)  { nextDx = 0; nextDy = -1; dx = 0; dy = -1; } break;
+                case 'ArrowDown':  if (dy !== -1) { nextDx = 0; nextDy = 1;  dx = 0; dy = 1;  } break;
+                case 'ArrowLeft':  if (dx !== 1)  { nextDx = -1; nextDy = 0; dx = -1; dy = 0; } break;
+                case 'ArrowRight': if (dx !== -1) { nextDx = 1; nextDy = 0;  dx = 1; dy = 0;  } break;
             }
         });
 
