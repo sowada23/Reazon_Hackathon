@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>感染コントロール・シミュレーター</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        #game-container {
+            display: flex;
+            gap: 20px;
+        }
+        canvas {
+            background-color: #2a2a2a;
+            border: 2px solid #555;
+            cursor: crosshair;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        #ui {
+            width: 250px;
+        }
+        h1 { font-size: 20px; margin-top: 0; color: #4CAF50; }
+        .status-box {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .stat { font-size: 18px; font-weight: bold; margin: 5px 0; }
+        .blue { color: #00bcd4; }
+        .red { color: #f44336; }
+        .green { color: #4caf50; }
+        #message {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="480" height="600"></canvas>
+    
+    <div id="ui">
+        <h1>感染コントロール<br>シミュレーター</h1>
+        <div class="status-box">
+            <div class="stat blue">生存者: <span id="survivorCount">20</span></div>
+            <div class="stat red">感染者: <span id="infectedCount">1</span> / 10</div>
+            <div class="stat green">脱出済: <span id="escapedCount">0</span></div>
+        </div>
+        <p style="font-size:14px; color:#aaa;">
+            ドラッグで壁を作成(最大6マス/3秒で消滅)。<br>
+            感染者が10人を超える前に生存者を全員脱出させろ！
+        </p>
+        <div id="message"></div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// 画面設定 (16 x 20 マス)
+const COLS = 16;
+const ROWS = 20;
+const TILE_SIZE = 30; // 16*30=480px, 20*30=600px
+
+// ゲーム状態
+let entities = [];
+let walls = [];
+let escapedCount = 0;
+let gameOver = false;
+
+// ドラッグ操作用
+let isDragging = false;
+let startGrid = null;
+let currentGrid = null;
+
+// キャラクタークラス
+class Entity {
+    constructor(gx, gy, type) {
+        this.gx = gx; // グリッドX
+        this.gy = gy; // グリッドY
+        this.tx = gx; // 目標グリッドX
+        this.ty = gy; // 目標グリッドY
+        this.px = gx * TILE_SIZE; // ピクセルX
+        this.py = gy * TILE_SIZE; // ピクセルY
+        this.type = type; // 0: 健康体, 1: 感染者
+        // 健康体スピード: 2px/frame, 感染者スピード: 2.5px/frame (1.25倍)
+        this.speed = type === 0 ? 2 : 2.5; 
+        this.escaped = false;
+    }
+
+    update() {
+        if (this.escaped) return;
+
+        // ピクセル移動処理
+        let dx = this.tx * TILE_SIZE - this.px;
+        let dy = this.ty * TILE_SIZE - this.py;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+
+        if (dist > this.speed) {
+            this.px += (dx / dist) * this.speed;
+            this.py += (dy / dist) * this.speed;
+        } else {
+            // 目標マスに到達
+            this.px = this.tx * TILE_SIZE;
+            this.py = this.ty * TILE_SIZE;
+            this.gx = this.tx;
+            this.gy = this.ty;
+            
+            // 脱出判定
+            if (this.gy === -1) {
+                this.escaped = true;
+                if (this.type === 0) escapedCount++;
+                return;
+            }
+            
+            this.decideNextMove();
+        }
+    }
+
+    decideNextMove() {
+        let validMoves = getValidMoves(this.gx, this.gy, this.type);
+        if (validMoves.length === 0) return;
+
+        let nextMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+
+        if (this.type === 0) {
+            // 健康体: 2マス以内に感染者がいたら逃げる
+            let nearestInfected = getNearestEntity(this.gx, this.gy, 1);
+            if (nearestInfected && nearestInfected.dist <= 2) {
+                let bestMove = null;
+                let maxDist = -1;
+                for (let move of validMoves) {
+                    let d = getManhattanDist(move.x, move.y, nearestInfected.entity.gx, nearestInfected.entity.gy);
+                    if (d > maxDist) {
+                        maxDist = d;
+                        bestMove = move;
+                    }
+                }
+                if (bestMove) nextMove = bestMove;
+            }
+        } else if (this.type === 1) {
+            // 感染者: 一番近い生存者を追いかける
+            let nearestSurvivor = getNearestEntity(this.gx, this.gy, 0);
+            if (nearestSurvivor) {
+                let bestMove = null;
+                let minDist = Infinity;
+                for (let move of validMoves) {
+                    let d = getManhattanDist(move.x, move.y, nearestSurvivor.entity.gx, nearestSurvivor.entity.gy);
+                    if (d < minDist) {
+                        minDist = d;
+                        bestMove = move;
+                    }
+                }
+                if (bestMove) nextMove = bestMove;
+            }
+        }
+
+        this.tx = nextMove.x;
+        this.ty = nextMove.y;
+    }
+
+    draw() {
+        if (this.escaped) return;
+        ctx.beginPath();
+        ctx.arc(this.px + TILE_SIZE/2, this.py + TILE_SIZE/2, TILE_SIZE/2 - 4, 0, Math.PI*2);
+        ctx.fillStyle = this.type === 0 ? '#00bcd4' : '#f44336';
+        ctx.fill();
+        ctx.closePath();
+    }
+}
+
+// 初期化
+function init() {
+    entities = [];
+    walls = [];
+    escapedCount = 0;
+    gameOver = false;
+    document.getElementById('message').innerText = "";
+
+    // 健康体 20人 (下の方にランダム配置)
+    for (let i = 0; i < 20; i++) {
+        let gx = Math.floor(Math.random() * COLS);
+        let gy = Math.floor(Math.random() * 10) + 10;
+        entities.push(new Entity(gx, gy, 0));
+    }
+
+    // 感染者 1人 (脱出ゲートから入場)
+    let infectedX = Math.floor(Math.random() * 4) + 6; // 6,7,8,9
+    let infected = new Entity(infectedX, 0, 1);
+    // 最初は中に入る動き
+    infected.tx = infectedX; 
+    infected.ty = 1;
+    entities.push(infected);
+
+    requestAnimationFrame(gameLoop);
+}
+
+// ヘルパー関数
+function getManhattanDist(x1, y1, x2, y2) {
+    return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+}
+
+function isWall(gx, gy) {
+    let now = Date.now();
+    for (let w of walls) {
+        if (w.x === gx && w.y === gy && w.expires > now) return true;
+    }
+    return false;
+}
+
+function getValidMoves(gx, gy, type) {
+    let moves = [];
+    const dirs = [[0,-1], [0,1], [-1,0], [1,0]];
+    
+    for (let d of dirs) {
+        let nx = gx + d[0];
+        let ny = gy + d[1];
+        
+        // ゲート（上部中央4マス: x=6,7,8,9, y=-1）への移動許可
+        if (ny === -1 && nx >= 6 && nx <= 9) {
+            moves.push({x: nx, y: ny});
+            continue;
+        }
+        
+        // 画面内かつ壁ではない
+        if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
+            if (!isWall(nx, ny)) {
+                moves.push({x: nx, y: ny});
+            }
+        }
+    }
+    return moves;
+}
+
+function getNearestEntity(gx, gy, type) {
+    let nearest = null;
+    let minDist = Infinity;
+    for (let e of entities) {
+        if (e.type === type && !e.escaped) {
+            let d = getManhattanDist(gx, gy, e.gx, e.gy);
+            if (d < minDist) {
+                minDist = d;
+                nearest = e;
+            }
+        }
+    }
+    return nearest ? { entity: nearest, dist: minDist } : null;
+}
+
+// ブレゼンハムの直線アルゴリズム（壁のマスを計算）
+function getLineGrids(x0, y0, x1, y1) {
+    let grids = [];
+    let dx = Math.abs(x1 - x0);
+    let dy = Math.abs(y1 - y0);
+    let sx = (x0 < x1) ? 1 : -1;
+    let sy = (y0 < y1) ? 1 : -1;
+    let err = dx - dy;
+
+    while(true) {
+        grids.push({x: x0, y: y0});
+        if ((x0 === x1) && (y0 === y1)) break;
+        let e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x0 += sx; }
+        if (e2 < dx) { err += dx; y0 += sy; }
+    }
+    return grids;
+}
+
+// マウスイベント
+function getGridFromEvent(e) {
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    return {
+        x: Math.min(Math.max(Math.floor(px / TILE_SIZE), 0), COLS - 1),
+        y: Math.min(Math.max(Math.floor(py / TILE_SIZE), 0), ROWS - 1)
+    };
+}
+
+canvas.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startGrid = getGridFromEvent(e);
+    currentGrid = startGrid;
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    currentGrid = getGridFromEvent(e);
+});
+
+canvas.addEventListener('mouseup', (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    
+    let line = getLineGrids(startGrid.x, startGrid.y, currentGrid.x, currentGrid.y);
+    
+    // ルール: 一回の壁は6マス以上作れない（6マスまではOKとする）
+    if (line.length <= 6) {
+        let expires = Date.now() + 3000; // 3秒後
+        for (let pt of line) {
+            walls.push({ x: pt.x, y: pt.y, expires: expires });
+        }
+    }
+});
+canvas.addEventListener('mouseleave', () => isDragging = false);
+
+
+// メインループ
+function gameLoop() {
+    if (gameOver) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // ゲート描画
+    ctx.fillStyle = '#4CAF50';
+    ctx.fillRect(6 * TILE_SIZE, 0, 4 * TILE_SIZE, 10);
+
+    // 壁の描画と期限切れ削除
+    let now = Date.now();
+    walls = walls.filter(w => w.expires > now);
+    ctx.fillStyle = '#2196f3'; // バリケード色
+    for (let w of walls) {
+        ctx.fillRect(w.x * TILE_SIZE, w.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
+
+    // ドラック中のプレビュー描画
+    if (isDragging && startGrid && currentGrid) {
+        let line = getLineGrids(startGrid.x, startGrid.y, currentGrid.x, currentGrid.y);
+        ctx.fillStyle = line.length <= 6 ? 'rgba(33, 150, 243, 0.5)' : 'rgba(244, 67, 54, 0.5)';
+        for (let pt of line) {
+            ctx.fillRect(pt.x * TILE_SIZE, pt.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+    }
+
+    // キャラクター更新・描画
+    let activeSurvivors = 0;
+    let infectedTotal = 0;
+
+    for (let e of entities) {
+        e.update();
+        e.draw();
+        if (!e.escaped) {
+            if (e.type === 0) activeSurvivors++;
+            if (e.type === 1) infectedTotal++;
+        } else if (e.type === 1) {
+            infectedTotal++; // 逃げた感染者も一応カウント
+        }
+    }
+
+    // 感染判定 (同じマスにいるか)
+    for (let i = 0; i < entities.length; i++) {
+        let e1 = entities[i];
+        if (e1.type !== 1 || e1.escaped) continue;
+        
+        for (let j = 0; j < entities.length; j++) {
+            let e2 = entities[j];
+            if (e2.type === 0 && !e2.escaped && e1.gx === e2.gx && e1.gy === e2.gy) {
+                e2.type = 1; // 感染！
+                e2.speed = 2.5;
+            }
+        }
+    }
+
+    // UI更新
+    document.getElementById('survivorCount').innerText = activeSurvivors;
+    document.getElementById('infectedCount').innerText = infectedTotal;
+    document.getElementById('escapedCount').innerText = escapedCount;
+
+    // 勝敗判定
+    if (infectedTotal > 10) {
+        gameOver = true;
+        document.getElementById('message').innerHTML = '<span class="red">GAME OVER<br>感染者が10人を超えました。</span>';
+    } else if (activeSurvivors === 0) {
+        // 画面上に生存者がいなくなった時、感染者が10人以下ならクリア
+        gameOver = true;
+        document.getElementById('message').innerHTML = '<span class="green">MISSION CLEAR!<br>生存者を全員誘導しました！</span>';
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+// ゲーム開始
+init();
+</script>
+</body>
+</html>
