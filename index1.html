@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2048スネーク - 最高操作性版</title>
+    <title>ネオンスネーク・ナンバーズ</title>
     <style>
         body {
             display: flex;
@@ -12,36 +12,39 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #faf8ef;
-            font-family: 'Arial', sans-serif;
+            background-color: #0f172a; /* ダークネイビー */
+            font-family: 'Consolas', 'Arial', sans-serif;
             overflow: hidden;
         }
         #header {
             display: flex;
             justify-content: space-between;
             width: 450px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
         #scoreBoard {
             font-size: 24px;
             font-weight: bold;
-            color: #776e65;
+            color: #38bdf8; /* ネオンブルー */
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
         }
         #speedBoard {
             font-size: 18px;
             font-weight: bold;
-            color: #f65e3b;
+            color: #a855f7; /* ネオンパープル */
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
             align-self: flex-end;
         }
         canvas {
-            background-color: #bbada0;
-            border-radius: 6px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            background-color: #1e293b; /* ディープグレー */
+            border-radius: 8px;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+            border: 2px solid #334155;
         }
         #overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(238, 228, 218, 0.85);
+            background: rgba(15, 23, 42, 0.9);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -49,14 +52,27 @@
             z-index: 10;
         }
         .hidden { display: none !important; }
-        .title { font-size: 40px; font-weight: bold; color: #776e65; margin-bottom: 20px; text-align: center; white-space: pre-line; }
-        .btn {
-            padding: 10px 30px; font-size: 20px; font-weight: bold;
-            color: white; background-color: #8f7a66; border: none; border-radius: 5px;
-            cursor: pointer; transition: 0.2s;
+        .title { 
+            font-size: 40px; 
+            font-weight: bold; 
+            color: #38bdf8; 
+            margin-bottom: 20px; 
+            text-align: center; 
+            white-space: pre-line;
+            text-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
         }
-        .btn:hover { background-color: #9f8b77; }
-        #hint { font-size: 14px; color: #a6998a; margin-top: 15px; }
+        .btn {
+            padding: 12px 35px; font-size: 20px; font-weight: bold;
+            color: #0f172a; background-color: #38bdf8; border: none; border-radius: 25px;
+            cursor: pointer; transition: 0.2s;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+        .btn:hover { 
+            background-color: #7dd3fc; 
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.8);
+            transform: scale(1.05);
+        }
+        #hint { font-size: 14px; color: #64748b; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -69,7 +85,7 @@
     <canvas id="gameCanvas" width="450" height="450"></canvas>
 
     <div id="overlay">
-        <div class="title" id="overlayTitle">2048スネーク</div>
+        <div class="title" id="overlayTitle">NEON SNAKE<br>NUMBERS</div>
         <button class="btn" id="startBtn">ゲームスタート</button>
         <div id="hint">※スペースキーでもスタートできます</div>
     </div>
@@ -170,15 +186,21 @@
         let moveInterval = baseMoveInterval;
         
         let player, dx, dy, nextDx, nextDy, lastTime, isGameOver, items, popScale;
-        let isFirstScreen = true; // 初回起動画面かどうかのフラグ
+        let isFirstScreen = true; 
 
+        // サイバーネオン調のカラーパレットに変更
         const colors = {
-            2: { bg: '#eee4da', text: '#776e65' }, 4: { bg: '#ede0c8', text: '#776e65' },
-            8: { bg: '#f2b179', text: '#f9f6f2' }, 16: { bg: '#f59563', text: '#f9f6f2' },
-            32: { bg: '#f67c5f', text: '#f9f6f2' }, 64: { bg: '#f65e3b', text: '#f9f6f2' },
-            128: { bg: '#edcf72', text: '#f9f6f2' }, 256: { bg: '#edcc61', text: '#f9f6f2' },
-            512: { bg: '#edc850', text: '#f9f6f2' }, 1024: { bg: '#edc53f', text: '#f9f6f2' },
-            2048: { bg: '#edc22e', text: '#f9f6f2' }
+            2: { bg: '#1e3a8a', text: '#60a5fa' },    // ブルー
+            4: { bg: '#2563eb', text: '#93c5fd' },    // ライトブルー
+            8: { bg: '#581c87', text: '#c084fc' },    // パープル
+            16: { bg: '#701a75', text: '#f472b6' },   // ピンク
+            32: { bg: '#9d174d', text: '#fb7185' },   // ローズ
+            64: { bg: '#991b1b', text: '#f87171' },   // レッド
+            128: { bg: '#7c2d12', text: '#fb923c' },  // オレンジ
+            256: { bg: '#78350f', text: '#fbbf24' },  // イエロー
+            512: { bg: '#064e3b', text: '#34d399' },  // ミントグリーン
+            1024: { bg: '#0f766e', text: '#2dd4bf' }, // ティール
+            2048: { bg: '#111827', text: '#22d3ee' }  // サイバーシアン（最高位）
         };
 
         function initGame() {
@@ -215,7 +237,7 @@
                     tileSize = canvas.width / gridSize;
                 }
                 player.size = 2;
-                scoreBoard.innerHTML = `現在の数字: ${player.value} <span style="color:#f65e3b; font-size:16px;">(盤面拡張＆巨大化中!)</span>`;
+                scoreBoard.innerHTML = `現在の数字: ${player.value} <span style="color:#2dd4bf; font-size:16px;">(MATRIX EXPANSION)</span>`;
             } else {
                 if (gridSize !== 15) {
                     gridSize = 15;
@@ -278,7 +300,6 @@
         function update() {
             if (isGameOver) return;
 
-            // 【変更点2】 キー入力された方向（nextDx, nextDy）を即時反映してレスポンス向上
             dx = nextDx; dy = nextDy;
             player.x += dx; player.y += dy;
 
@@ -314,12 +335,14 @@
             stopBGM();
             playSound('crash'); 
             overlay.classList.remove('hidden');
-            overlayTitle.innerText = `Game Over\n(記録: ${player.value})`;
+            overlayTitle.innerHTML = `<span style="color:#ef4444; text-shadow: 0 0 15px rgba(239,68,68,0.7);">GAME OVER</span>\n(SCORE: ${player.value})`;
             startBtn.innerText = "スペースキーでリトライ";
+            startBtn.style.backgroundColor = "#ef4444";
+            startBtn.style.boxShadow = "0 0 15px rgba(239, 68, 68, 0.4)";
         }
 
         function drawPlayerBlock(x, y, value, size, scale = 1.0) {
-            const colorObj = colors[value] || { bg: '#3c3a32', text: '#f9f6f2' };
+            const colorObj = colors[value] || { bg: '#0f172a', text: '#ffffff' };
             const totalWidth = size * tileSize;
             const cx = x * tileSize + totalWidth / 2;
             const cy = y * tileSize + totalWidth / 2;
@@ -329,12 +352,21 @@
             ctx.scale(scale, scale);
             ctx.translate(-cx, -cy);
 
+            // プレイヤー（スネークの頭）にネオンの光彩エフェクトを追加
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = colorObj.text;
             ctx.fillStyle = colorObj.bg;
             ctx.fillRect(x * tileSize + 2, y * tileSize + 2, totalWidth - 4, totalWidth - 4);
             
+            // 枠線を追加してデジタル感を演出
+            ctx.strokeStyle = colorObj.text;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x * tileSize + 2, y * tileSize + 2, totalWidth - 4, totalWidth - 4);
+
+            ctx.shadowBlur = 0; // テキストは影を消してくっきりさせる
             ctx.fillStyle = colorObj.text;
             const fSize = gridSize === 20 ? (value > 100 ? '16px' : '22px') : (value > 100 ? '20px' : '28px');
-            ctx.font = 'bold ' + fSize + ' Arial';
+            ctx.font = 'bold ' + fSize + ' Courier New';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(value, cx, cy);
@@ -343,24 +375,32 @@
         }
 
         function drawNormalBlock(x, y, value) {
-            const colorObj = colors[value] || { bg: '#3c3a32', text: '#f9f6f2' };
+            const colorObj = colors[value] || { bg: '#0f172a', text: '#ffffff' };
             const cx = x * tileSize + tileSize / 2;
             const cy = y * tileSize + tileSize / 2;
+            
             ctx.fillStyle = colorObj.bg;
             ctx.fillRect(x * tileSize + 2, y * tileSize + 2, tileSize - 4, tileSize - 4);
+            
+            ctx.strokeStyle = colorObj.text;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x * tileSize + 2, y * tileSize + 2, tileSize - 4, tileSize - 4);
+
             ctx.fillStyle = colorObj.text;
             const fSize = gridSize === 20 ? (value > 100 ? '12px' : '15px') : (value > 100 ? '16px' : '20px');
-            ctx.font = 'bold ' + fSize + ' Arial';
+            ctx.font = 'bold ' + fSize + ' Courier New';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(value, cx, cy);
         }
 
         function draw() {
-            ctx.fillStyle = '#bbada0';
+            // キャンバス背景色をディープグレーに変更
+            ctx.fillStyle = '#1e293b';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.strokeStyle = 'rgba(166, 153, 138, 0.5)';
+            // グリッド線をサイバーチックな薄い青に変更
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
             for (let i = 0; i < gridSize; i++) {
                 ctx.beginPath(); ctx.moveTo(i * tileSize, 0); ctx.lineTo(i * tileSize, canvas.height); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(0, i * tileSize); ctx.lineTo(canvas.width, i * tileSize); ctx.stroke();
@@ -368,7 +408,6 @@
 
             items.forEach(item => drawNormalBlock(item.x, item.y, item.value));
 
-            // 【変更点1】 追従係数を 0.3 から 0.35 に微増させ、かつ入力方向へのキレを良くしてより滑らかに
             player.visualX += (player.x - player.visualX) * 0.35;
             player.visualY += (player.y - player.visualY) * 0.35;
 
@@ -392,7 +431,6 @@
                 e.preventDefault();
             }
 
-            // 【変更点3】 メニュー表示中、またはゲームオーバー時にスペースキーでリスタート
             if (e.key === ' ' || e.code === 'Space') {
                 if (isFirstScreen || isGameOver) {
                     initGame();
@@ -401,7 +439,6 @@
             }
 
             switch (e.key) {
-                // キーを押した瞬間に即座に進行方向のバッファ（nextDx, nextDy）を反映
                 case 'ArrowUp':    if (dy !== 1)  { nextDx = 0; nextDy = -1; dx = 0; dy = -1; } break;
                 case 'ArrowDown':  if (dy !== -1) { nextDx = 0; nextDy = 1;  dx = 0; dy = 1;  } break;
                 case 'ArrowLeft':  if (dx !== 1)  { nextDx = -1; nextDy = 0; dx = -1; dy = 0; } break;
