@@ -46,6 +46,17 @@ const ctx = canvas.getContext('2d');
 // ドット絵のシャープさを保つ設定
 ctx.imageSmoothingEnabled = false;
 
+// ==========================================
+// 🛠️ 外部画像の読み込み設定
+// ==========================================
+// ※index.htmlと同じフォルダに画像を置いてください。別のファイル名にする場合はここを変更します。
+const imgPlayerA = new Image();
+imgPlayerA.src = 'asset_chara_runfront_clear.png'; // 1枚目の画像（右足前など）
+
+const imgPlayerB = new Image();
+imgPlayerB.src = 'asset_chara_backrun_clear.png'; // 2枚目の画像（左足前など）
+// ==========================================
+
 // --- ゲーム状態管理 ---
 let gameState = 'TITLE'; 
 let prePauseState = '';  
@@ -145,7 +156,7 @@ function runBGM() {
 
 // --- オブジェクト定義 ---
 const player = {
-    x: 150, y: 250, w: 48, h: 64, vy: 0,
+    x: 150, y: 250, w: 80, h: 80, vy: 0,
     gravity: 0.26, jumpForce: -7.5, speed: 3.8,      
     hp: 8, maxHp: 8, shootTimer: 0, shieldTimer: 0, 
     reset() {
@@ -325,7 +336,7 @@ function drawBackgroundObjects() {
     });
 }
 
-// 【要求仕様】横から見た一般の会社員（1マス/数フレームごとに右足・左足を交互にアニメーション）
+// 外部画像を使ったプレイヤーの描画処理
 function drawPlayer(ctx, x, y, w, h) {
     ctx.save();
     
@@ -337,47 +348,17 @@ function drawPlayer(ctx, x, y, w, h) {
         ctx.strokeRect(x - 12, y - 8, w + 24, h + 16);
     }
 
-    // 6フレームごとに足を反転させて交互に走っているように見せる
-    let legFlip = Math.floor(gameFrame / 6) % 2 === 0;
+    // 8フレームごとに足を反転させて交互に走っているように見せる
+    let legFlip = Math.floor(gameFrame / 100) % 2 === 0;
+    let currentActiveImg = legFlip ? imgPlayerA : imgPlayerB;
 
-    // 1. 体（紺色のビジネススーツ）
-    ctx.fillStyle = '#222533'; 
-    ctx.fillRect(x + 10, y + 24, w - 20, h - 38);
+    // 🛠️ ローカル制限(CORS)に干渉されにくい「画像ロード完了チェック」に変更
+    if (currentActiveImg.complete && currentActiveImg.width > 0) {
+        // 画像の縦横比を完全に1:1のスクエア型(w×h)でそのままクッキリ投影
+        ctx.drawImage(currentActiveImg, x, y, w, h);
 
-    // 2. 頭・肌（ピーチベージュ）
-    ctx.fillStyle = '#f5bca9'; 
-    ctx.fillRect(x + 14, y + 6, w - 28, 18);
-    
-    // 3. 髪の毛（茶色）
-    ctx.fillStyle = '#5c4033'; 
-    ctx.fillRect(x + 12, y, w - 22, 8);
-    ctx.fillRect(x + 28, y + 6, 10, 6); // もみあげ
-
-    // 4. 赤いネクタイと白いシャツ
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(x + 22, y + 24, 6, 8);
-    ctx.fillStyle = '#ac3232'; // ネクタイ赤
-    ctx.fillRect(x + 24, y + 26, 3, 12);
-
-    // 5. カバン（ビジネスバッグを手に持っているドット）
-    ctx.fillStyle = '#663931';
-    ctx.fillRect(x + 2, y + 36, 12, 10);
-
-    // 6. 【要求仕様】足のアニメーション（右足・左足を交互に前後に動かす）
-    ctx.fillStyle = '#1c1c24'; // 靴・ズボンの暗い色
-    if (legFlip) {
-        // パターンA: 右足が前、左足が後ろ
-        ctx.fillRect(x + 8, y + 50, 8, 14);  // 左足（後ろ）
-        ctx.fillRect(x + 24, y + 50, 10, 14); // 右足（前）
-        // 靴のつま先（右向きに走っている）
-        ctx.fillRect(x + 32, y + 60, 4, 4);
-    } else {
-        // パターンB: 左足が前、右足が後ろ
-        ctx.fillRect(x + 12, y + 50, 10, 14); // 左足（前）
-        ctx.fillRect(x + 26, y + 50, 8, 14);  // 右足（後ろ）
-        // 靴のつま先
-        ctx.fillRect(x + 20, y + 60, 4, 4);
     }
+
     
     ctx.restore();
 }
