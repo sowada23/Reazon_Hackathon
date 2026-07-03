@@ -1,45 +1,3 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salaryman Escape - Pixel Art Edition</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #110f18;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Courier New', Courier, monospace, sans-serif;
-        }
-        #game-container {
-            position: relative;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
-            border-radius: 8px;
-            overflow: hidden;
-            border: 4px solid #4a3525; /* ドット絵ゲーム風の木製フレーム風枠線 */
-        }
-        canvas {
-            display: block;
-            background: #222034;
-        }
-    </style>
-</head>
-<body>
-
-<div id="game-container">
-    <canvas id="gameCanvas" width="900" height="600"></canvas>
-</div>
-
-<script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -856,7 +814,3 @@ function loop() {
     update(); draw(); requestAnimationFrame(loop);
 }
 loop();
-</script>
-
-</body>
-</html>
