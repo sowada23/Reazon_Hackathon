@@ -1,0 +1,90 @@
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #0f172a; /* ダークネイビー */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+}
+#ui-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 450px;
+    margin-bottom: 15px;
+    background: rgba(30, 41, 59, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+#header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 5px;
+}
+#scoreBoard {
+    font-size: 26px;
+    font-weight: 900;
+    color: #38bdf8; /* ネオンブルー */
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+#speedBoard {
+    font-size: 18px;
+    font-weight: bold;
+    color: #a855f7; /* ネオンパープル */
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+    align-self: flex-end;
+}
+#targetInfo {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-top: 5px;
+    width: 100%;
+    text-align: left;
+    border-top: 1px solid #334155;
+    padding-top: 5px;
+}
+canvas {
+    background-color: #1e293b; /* ディープグレー */
+    border-radius: 8px;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
+    border: 2px solid #334155;
+}
+#overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+.hidden { display: none !important; }
+.title { 
+    font-size: 36px; 
+    font-weight: 900; 
+    color: #38bdf8; 
+    margin-bottom: 20px; 
+    text-align: center; 
+    white-space: pre-line;
+    text-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+    letter-spacing: 2px;
+}
+.btn {
+    padding: 12px 35px; font-size: 18px; font-weight: bold;
+    color: #0f172a; background-color: #38bdf8; border: none; border-radius: 25px;
+    cursor: pointer; transition: 0.2s;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+.btn:hover { 
+    background-color: #7dd3fc; 
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.8);
+    transform: scale(1.05);
+}
+#hint { font-size: 13px; color: #64748b; margin-top: 15px; }
