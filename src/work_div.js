@@ -782,21 +782,21 @@ function draw() {
         drawPlayer(ctx, canvas.width/2 - 24, canvas.height/2 - 160, player.w, player.h);
         
         ctx.fillStyle = '#fee761'; ctx.font = 'bold 40px monospace';
-        ctx.fillText('Salaryman Escape', canvas.width / 2, canvas.height / 2 - 25);
+        ctx.fillText('サラリーラン', canvas.width / 2, canvas.height / 2 - 25);
         ctx.font = '16px monospace'; ctx.fillStyle = '#ffffff';
-        ctx.fillText('--- スペースキーを押して、定時退社へ走り出せ！ ---', canvas.width / 2, canvas.height / 2 + 15);
+        ctx.fillText('--- 定時退社へ走り出せ！ ---', canvas.width / 2, canvas.height / 2 + 15);
 
         ctx.fillStyle = '#321c14'; ctx.fillRect(canvas.width / 2 - 270, canvas.height / 2 + 55, 540, 210);
         ctx.strokeStyle = '#964b00'; ctx.lineWidth = 3; ctx.strokeRect(canvas.width / 2 - 270, canvas.height / 2 + 55, 540, 210);
 
-        ctx.fillStyle = '#fee761'; ctx.font = 'bold 14px monospace';
+        ctx.fillStyle = '#fee761'; ctx.font = 'bold 16px monospace';
         ctx.fillText('🎮 KEYBOARD MANUAL 🎮', canvas.width / 2, canvas.height / 2 + 85);
-        ctx.font = '12px monospace'; ctx.fillStyle = '#ffffff';
-        ctx.fillText('【 通常フロア 】  [ Space ] でダッシュ・ジャンプ（障害物回避）', canvas.width / 2, canvas.height / 2 + 115);
-        ctx.fillText('【 ボス戦モード 】 [ W, A, S, D ] または [ 矢印 ] で自由移動', canvas.width / 2, canvas.height / 2 + 145);
-        ctx.fillText('【 承認ハンコ弾 】  [ Q ] 大ダメージのハンコを横一線に放つ (ストック1消費)', canvas.width / 2, canvas.height / 2 + 175);
-        ctx.fillText('【 有給バリア 】  [ E ] 敵の弾やタスクを完全に消去する (ストック1消費)', canvas.width / 2, canvas.height / 2 + 205);
-        ctx.fillText('【 一時停止 】     [ Esc ] キーでいつでも社内ポーズ画面', canvas.width / 2, canvas.height / 2 + 235);
+        ctx.font = '16px monospace'; ctx.fillStyle = '#ffffff';
+        ctx.fillText('[ Space ] ジャンプ', canvas.width / 2, canvas.height / 2 + 115);
+        ctx.fillText('[ 矢印 ] ボス戦移動', canvas.width / 2, canvas.height / 2 + 145);
+        ctx.fillText(' [ Q ] 大ダメージ！', canvas.width / 2, canvas.height / 2 + 175);
+        ctx.fillText(' [ E ] バリア', canvas.width / 2, canvas.height / 2 + 205);
+        ctx.fillText('[ Esc ]一時停止', canvas.width / 2, canvas.height / 2 + 235);
 
     } else if (gameState === 'PAUSE') {
         ctx.fillStyle = 'rgba(15, 15, 20, 0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -804,25 +804,27 @@ function draw() {
         ctx.strokeStyle = '#964b00'; ctx.lineWidth = 4; ctx.strokeRect(canvas.width / 2 - 300, canvas.height / 2 - 210, 600, 420);
 
         ctx.fillStyle = '#fee761'; ctx.font = 'bold 28px monospace';
-        ctx.fillText('⏸️ PAUSE (業務一時中断)', canvas.width / 2, canvas.height / 2 - 150);
+        ctx.fillText('⏸️ PAUSE', canvas.width / 2, canvas.height / 2 - 150);
 
+        /*
         ctx.fillStyle = '#ffb3d9'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'left';
         ctx.fillText('📝 業務の概要', canvas.width / 2 - 250, canvas.height / 2 - 100);
         ctx.fillStyle = '#ffffff'; ctx.font = '12px monospace';
         ctx.fillText('飛び交う未読メールや山積みのタスク書類を華麗に跳び越え、書類を集めよう！', canvas.width / 2 - 250, canvas.height / 2 - 75);
         ctx.fillText('書類5枚ごとに、上司を撃退する大技(Q)や有給バリア(E)が発動可能。', canvas.width / 2 - 250, canvas.height / 2 - 55);
         ctx.fillText('全5フロアの個性的な上司やクライアントを満足（撃破）させて脱出だ！', canvas.width / 2 - 250, canvas.height / 2 - 35);
+        */
 
-        ctx.fillStyle = '#cbdcff'; ctx.font = 'bold 14px monospace';
-        ctx.fillText('🛠️ 操作方法の復習', canvas.width / 2 - 250, canvas.height / 2 + 15);
-        ctx.fillStyle = '#ffffff'; ctx.font = '12px monospace';
-        ctx.fillText('・通常ステージの跳躍         ： [ Space ] キー', canvas.width / 2 - 250, canvas.height / 2 + 40);
-        ctx.fillText('・ボス戦の自由移動          ： [ W, A, S, D ] または [ 矢印 ] キー', canvas.width / 2 - 250, canvas.height / 2 + 60);
-        ctx.fillText('・承認ハンコ特大弾          ： [ Q ] キー (書類5枚消費)', canvas.width / 2 - 250, canvas.height / 2 + 80);
-        ctx.fillText('・定時退社シールド（弾消し）： [ E ] キー (書類5枚消費)', canvas.width / 2 - 250, canvas.height / 2 + 100);
+        ctx.fillStyle = '#cbdcff'; ctx.font = 'bold 26px monospace';
+        ctx.fillText('🛠️ 操作方法', canvas.width / 2 - 50, canvas.height / 2 + 15);
+        ctx.fillStyle = '#ffffff'; ctx.font = '20px monospace';
+        ctx.fillText('・ジャンプ         ： [ Space ] ', canvas.width / 2 - 50, canvas.height / 2 + 40);
+        ctx.fillText('・ボス戦の自由移動          ： [ 矢印 ] キー', canvas.width / 2 - 50, canvas.height / 2 + 60);
+        ctx.fillText('・ハンコ特大弾          ： [ Q ]  (書類5枚消費)', canvas.width / 2 - 50, canvas.height / 2 + 80);
+        ctx.fillText('・バリア： [ E ] キー (書類5枚消費)', canvas.width / 2 - 50, canvas.height / 2 + 100);
 
-        ctx.textAlign = 'center'; ctx.fillStyle = '#38b549'; ctx.font = 'bold 16px monospace';
-        ctx.fillText('✨ [ Space ] キーを押すと 業務に復帰（再開）します ✨', canvas.width / 2, canvas.height / 2 + 160);
+        ctx.textAlign = 'center'; ctx.fillStyle = '#38b549'; ctx.font = 'bold 20px monospace';
+        ctx.fillText('[ Space ] で再開', canvas.width / 2, canvas.height / 2 + 160);
 
     } else if (gameState === 'GAMEOVER') {
         ctx.fillStyle = 'rgba(20, 10, 15, 0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
