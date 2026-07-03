@@ -189,6 +189,10 @@ window.addEventListener('keydown', e => {
             playSE('jump');
             createParticles(player.x + player.w/2, player.y + player.h, '#d8c2b5', 4, 2);
         } else if (gameState === 'TITLE') {
+            // 👇 直接始まらず、案内画面に切り替える
+            gameState = 'INSTRUCTION';
+        } else if (gameState === 'INSTRUCTION') {
+            // 👇 案内画面の時にスペースを押したらゲーム開始
             initGame(); gameState = 'STAGE';
         } else if (gameState === 'GAMEOVER' || gameState === 'CLEAR') {
             gameState = 'TITLE';
@@ -634,7 +638,7 @@ function update() {
         let p = playerBullets[i]; p.x += p.vx;
         if (gameState === 'BOSS' && p.x > boss.x && p.x < boss.x + boss.w &&
             p.y > boss.y && p.y < boss.y + boss.h) {
-            let damage = p.isSpecial ? 25 : 3;
+            let damage = p.isSpecial ? 25 : 2;
             boss.hp -= damage; playSE('boss_damage');
             createParticles(p.x, p.y, p.isSpecial ? '#e43b44' : '#fee761', p.isSpecial ? 12 : 4);
             playerBullets.splice(i, 1);
@@ -692,7 +696,7 @@ function draw() {
         if (p.isSpecial) {
             // 巨大な承認ハンコ弾（判定サイズ48に対して1.6倍の76x76スクエアで大きく描画）
             if (gameImages.bulletSpecial.complete && gameImages.bulletSpecial.width > 0) {
-                const drawSize = p.w * 1.6;
+                const drawSize = p.w * 2.5;
                 ctx.drawImage(gameImages.bulletSpecial, p.x - drawSize / 2, p.y - drawSize / 2, drawSize, drawSize);
             } else {
                 ctx.fillStyle = '#ac3232'; ctx.fillRect(p.x - p.w/2, p.y - p.h/2, p.w, p.h);
@@ -754,7 +758,7 @@ function draw() {
         // ボスHPバー (最下部に独立配置)
         if (gameState === 'BOSS' || (gameState === 'PAUSE' && prePauseState === 'BOSS')) {
             ctx.save();
-            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px monospace'; ctx.textAlign = 'center';
             ctx.fillText(bossStages[currentBossIdx].name, canvas.width / 2, canvas.height - 48);
 
             ctx.fillStyle = '#1a1c2c'; ctx.fillRect(canvas.width / 2 - 180, canvas.height - 35, 360, 16);
@@ -782,9 +786,9 @@ function draw() {
         drawPlayer(ctx, canvas.width/2 - 24, canvas.height/2 - 160, player.w, player.h);
         
         ctx.fillStyle = '#fee761'; ctx.font = 'bold 40px monospace';
-        ctx.fillText('サラリーラン', canvas.width / 2, canvas.height / 2 - 25);
+        ctx.fillText('サラリーRUN', canvas.width / 2, canvas.height / 2 - 25);
         ctx.font = '16px monospace'; ctx.fillStyle = '#ffffff';
-        ctx.fillText('--- 定時退社へ走り出せ！ ---', canvas.width / 2, canvas.height / 2 + 15);
+        ctx.fillText('--- ファイルを集めて、走り出せ！ ---', canvas.width / 2, canvas.height / 2 + 15);
 
         ctx.fillStyle = '#321c14'; ctx.fillRect(canvas.width / 2 - 270, canvas.height / 2 + 55, 540, 210);
         ctx.strokeStyle = '#964b00'; ctx.lineWidth = 3; ctx.strokeRect(canvas.width / 2 - 270, canvas.height / 2 + 55, 540, 210);
@@ -798,13 +802,34 @@ function draw() {
         ctx.fillText(' [ E ] バリア', canvas.width / 2, canvas.height / 2 + 205);
         ctx.fillText('[ Esc ]一時停止', canvas.width / 2, canvas.height / 2 + 235);
 
+    } else if (gameState === 'INSTRUCTION') {
+        // 👇 【ここを追加】新しく案内画面の描画レイヤーを追加
+        ctx.fillStyle = 'rgba(20, 16, 19, 0.95)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 案内枠の表示
+        ctx.fillStyle = '#321c14'; ctx.fillRect(canvas.width / 2 - 320, canvas.height / 2 - 130, 640, 260);
+        ctx.strokeStyle = '#964b00'; ctx.lineWidth = 3; ctx.strokeRect(canvas.width / 2 - 320, canvas.height / 2 - 130, 640, 260);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fee761'; ctx.font = 'bold 24px monospace';
+        ctx.fillText('ルール説明', canvas.width / 2, canvas.height / 2 - 80);
+
+        // ご指定の案内テキスト（センタリング配置）
+        ctx.fillStyle = '#ffffff'; ctx.font = '20px monospace';
+        ctx.fillText('ファイルを集めて、障害物を避けよう！', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.fillText('コーヒーでHP回復！', canvas.width / 2, canvas.height / 2 + 30);
+
+        // アクションを促すテキスト
+        ctx.fillStyle = '#38b549'; ctx.font = 'bold 18px monospace';
+        ctx.fillText('[ Space ] でゲーム開始！', canvas.width / 2, canvas.height / 2 + 90);
+
     } else if (gameState === 'PAUSE') {
         ctx.fillStyle = 'rgba(15, 15, 20, 0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#321c14'; ctx.fillRect(canvas.width / 2 - 300, canvas.height / 2 - 210, 600, 420);
         ctx.strokeStyle = '#964b00'; ctx.lineWidth = 4; ctx.strokeRect(canvas.width / 2 - 300, canvas.height / 2 - 210, 600, 420);
 
         ctx.fillStyle = '#fee761'; ctx.font = 'bold 28px monospace';
-        ctx.fillText('⏸️ PAUSE', canvas.width / 2, canvas.height / 2 - 150);
+        ctx.fillText('⏸️ PAUSE', canvas.width / 2, canvas.height / 2 - 140);
 
         /*
         ctx.fillStyle = '#ffb3d9'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'left';
@@ -816,12 +841,14 @@ function draw() {
         */
 
         ctx.fillStyle = '#cbdcff'; ctx.font = 'bold 26px monospace';
-        ctx.fillText('🛠️ 操作方法', canvas.width / 2 - 50, canvas.height / 2 + 15);
+        ctx.textAlign = 'center';
+        ctx.fillText('🛠️ 操作方法', canvas.width / 2, canvas.height / 2 - 60);
+        
         ctx.fillStyle = '#ffffff'; ctx.font = '20px monospace';
-        ctx.fillText('・ジャンプ         ： [ Space ] ', canvas.width / 2 - 50, canvas.height / 2 + 40);
-        ctx.fillText('・ボス戦の自由移動          ： [ 矢印 ] キー', canvas.width / 2 - 50, canvas.height / 2 + 60);
-        ctx.fillText('・ハンコ特大弾          ： [ Q ]  (書類5枚消費)', canvas.width / 2 - 50, canvas.height / 2 + 80);
-        ctx.fillText('・バリア： [ E ] キー (書類5枚消費)', canvas.width / 2 - 50, canvas.height / 2 + 100);
+        ctx.fillText('・ジャンプ ： [ Space ]', canvas.width / 2, canvas.height / 2 - 25);
+        ctx.fillText('・ボス戦の自由移動 ： [ 矢印 ] キー', canvas.width / 2, canvas.height / 2 + 10);
+        ctx.fillText('・ハンコ特大弾 ： [ Q ] (書類5枚消費)', canvas.width / 2, canvas.height / 2 + 45);
+        ctx.fillText('・バリア ： [ E ] キー (書類5枚消費)', canvas.width / 2, canvas.height / 2 + 80);
 
         ctx.textAlign = 'center'; ctx.fillStyle = '#38b549'; ctx.font = 'bold 20px monospace';
         ctx.fillText('[ Space ] で再開', canvas.width / 2, canvas.height / 2 + 160);
@@ -874,38 +901,3 @@ requestAnimationFrame((timestamp) => {
     lastTime = timestamp;
     loop(timestamp);
 });
-
-/*
-let lastTime = 0;
-const fpsInterval = 1000 / 60; // 60FPS（約16.67ミリ秒に1回進める）
-
-function loop(currentTime) {
-    requestAnimationFrame(loop);
-
-    // 経過時間を計算
-    const elapsed = currentTime - lastTime;
-
-    // 約16.67ミリ秒以上が経過したときだけゲームを1フレーム進める
-    if (elapsed >= fpsInterval) {
-        // 次のフレームのために時間を調整
-        lastTime = currentTime - (elapsed % fpsInterval);
-        
-        update(); 
-        draw();
-    }
-}
-
-// 初回のループを開始
-requestAnimationFrame((timestamp) => {
-    lastTime = timestamp;
-    loop(timestamp);
-});
-
-*/
-
-/*
-function loop() {
-    update(); draw(); requestAnimationFrame(loop);
-}
-loop();
-*/
