@@ -791,7 +791,68 @@ function draw() {
     ctx.restore();
 }
 
+let lastTime = 0;
+let timeAccumulator = 0;
+const tickRate = 1000 / 120; // ★ゲームの計算速度を「120FPSの爆速スピード」に設定
+
+function loop(currentTime) {
+    requestAnimationFrame(loop);
+
+    // 前回のフレームからの経過時間を計算
+    const elapsed = currentTime - lastTime;
+    lastTime = currentTime;
+
+    // 経過時間をプール（蓄積）していく
+    timeAccumulator += elapsed;
+
+    // 120FPSのペース（約8.33ミリ秒）が貯まった分だけ、updateを小分けに実行する
+    // ※これにより、どのパソコンでもゲームの進む速度が「120Hzの速度」で完全に一致します！
+    while (timeAccumulator >= tickRate) {
+        update();
+        timeAccumulator -= tickRate;
+    }
+
+    // 画面の描画はブラウザの最大性能（60Hzなら60回、120Hzなら120回）で行う
+    draw();
+}
+
+// 初回のループを開始
+requestAnimationFrame((timestamp) => {
+    lastTime = timestamp;
+    loop(timestamp);
+});
+
+/*
+let lastTime = 0;
+const fpsInterval = 1000 / 60; // 60FPS（約16.67ミリ秒に1回進める）
+
+function loop(currentTime) {
+    requestAnimationFrame(loop);
+
+    // 経過時間を計算
+    const elapsed = currentTime - lastTime;
+
+    // 約16.67ミリ秒以上が経過したときだけゲームを1フレーム進める
+    if (elapsed >= fpsInterval) {
+        // 次のフレームのために時間を調整
+        lastTime = currentTime - (elapsed % fpsInterval);
+        
+        update(); 
+        draw();
+    }
+}
+
+// 初回のループを開始
+requestAnimationFrame((timestamp) => {
+    lastTime = timestamp;
+    loop(timestamp);
+});
+
+*/
+
+/*
 function loop() {
     update(); draw(); requestAnimationFrame(loop);
 }
 loop();
+*/
